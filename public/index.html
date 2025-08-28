@@ -1,0 +1,1172 @@
+<!DOCTYPE html> 
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Carrera de Patos Inversa</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:linear-gradient(45deg,#1e3c72,#2a5298,#87CEEB);
+    background-size:300% 300%;animation:grad 8s ease infinite;
+    height:100vh;overflow:hidden
+  }
+  @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .container{width:100%;height:100vh;display:flex;flex-direction:column}
+
+  /* ===== START ===== */
+  .start-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#fff;position:relative;overflow:hidden;text-align:center}
+  .logo{font-size:4em;margin-bottom:18px;text-shadow:3px 3px 6px rgba(0,0,0,.5);animation:bounce 2s ease-in-out infinite}
+  .title{font-size:3em;font-weight:700;margin-bottom:10px;text-shadow:2px 2px 4px rgba(0,0,0,.5);background:linear-gradient(45deg,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{font-size:1.2em;opacity:.9;margin-bottom:36px}
+  .menu-buttons{display:flex;flex-direction:column;gap:18px;z-index:10}
+  .menu-btn{padding:14px 36px;font-size:1.2em;font-weight:700;border:none;border-radius:50px;cursor:pointer;transition:.3s;box-shadow:0 8px 24px rgba(0,0,0,.3);min-width:240px}
+  .menu-btn.play{background:linear-gradient(45deg,#FF6B6B,#4ECDC4);color:#fff}
+  .menu-btn.multiplayer{background:linear-gradient(45deg,#667eea,#764ba2);color:#fff}
+  .menu-btn.details{background:linear-gradient(45deg,#A8E6CF,#88D8C0);color:#2E8B57}
+  .menu-btn.config{background:linear-gradient(45deg,#FFD93D,#FF6B6B);color:#fff}
+  .menu-btn:hover{transform:translateY(-4px) scale(1.03)}
+  .floating-ducks{position:absolute;inset:0;pointer-events:none}
+  .floating-duck{position:absolute;font-size:2em;opacity:.7;animation:float 10s linear infinite}
+  @keyframes float{0%{transform:translateX(-100px)}50%{transform:translateX(50vw) translateY(-20px) rotate(180deg)}100%{transform:translateX(calc(100vw + 100px)) rotate(360deg)}}
+  @keyframes bounce{
+    0%,20%,50%,80%,100%{transform:translateY(0)}
+    40%{transform:translateY(-14px)}
+    60%{transform:translateY(-7px)}
+  }
+
+  /* ===== MULTIPLAYER SCREENS ===== */
+  .multiplayer-screen{
+    display:none;position:relative;margin:20px auto;padding:22px;
+    max-width:800px;height:calc(100vh - 40px);overflow:auto;
+    background:rgba(255,255,255,.95);border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.3)
+  }
+  .multiplayer-header{text-align:center;margin-bottom:30px}
+  .multiplayer-title{color:#667eea;font-size:2.5em;margin-bottom:10px}
+  .multiplayer-buttons{display:flex;flex-direction:column;gap:20px;align-items:center;margin:30px 0}
+  .multiplayer-btn{padding:16px 40px;font-size:1.3em;font-weight:700;border:none;border-radius:25px;cursor:pointer;transition:.3s;box-shadow:0 6px 20px rgba(0,0,0,.2);min-width:280px}
+  .multiplayer-btn.create{background:linear-gradient(45deg,#4ECDC4,#44A08D);color:#fff}
+  .multiplayer-btn.join{background:linear-gradient(45deg,#667eea,#764ba2);color:#fff}
+  .multiplayer-btn:hover{transform:translateY(-3px) scale(1.02)}
+
+  /* ===== ROOM SCREENS ===== */
+  .room-screen{
+    display:none;position:relative;margin:20px auto;padding:22px;
+    max-width:1000px;height:calc(100vh - 40px);overflow:auto;
+    background:rgba(255,255,255,.95);border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.3)
+  }
+  .room-header{text-align:center;margin-bottom:20px}
+  .room-title{color:#4ECDC4;font-size:2.2em;margin-bottom:10px}
+  .room-code{background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;padding:10px 20px;border-radius:15px;font-size:1.4em;font-weight:800;display:inline-block;margin:10px;letter-spacing:2px}
+  
+  .input-section{margin:20px 0;text-align:center}
+  .room-input{padding:12px 20px;font-size:1.2em;border:2px solid #667eea;border-radius:15px;text-align:center;letter-spacing:2px;font-weight:700;width:200px}
+  .room-input:focus{outline:none;border-color:#4ECDC4;box-shadow:0 0 10px rgba(78,205,196,.3)}
+
+  .waiting-room{margin:20px 0}
+  .players-list{background:#f8f9fa;border-radius:15px;padding:20px;margin:15px 0;max-height:300px;overflow:auto}
+  .player-item{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;margin:8px 0;background:#fff;border-radius:10px;border-left:4px solid #4ECDC4;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+  .player-name{font-weight:600;color:#2c3e50}
+  .player-status{color:#666;font-size:0.9em}
+  .host-badge{background:linear-gradient(45deg,#FFD700,#FFA500);color:#fff;padding:3px 8px;border-radius:12px;font-size:0.8em;font-weight:700}
+  
+  .room-controls{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+  .room-btn{padding:12px 25px;font-size:1.1em;font-weight:700;border:none;border-radius:20px;cursor:pointer;transition:.3s;box-shadow:0 4px 15px rgba(0,0,0,.2)}
+  .room-btn.start{background:linear-gradient(45deg,#4ECDC4,#44A08D);color:#fff}
+  .room-btn.back{background:linear-gradient(45deg,#95a5a6,#7f8c8d);color:#fff}
+  .room-btn.copy{background:linear-gradient(45deg,#3498db,#2980b9);color:#fff}
+  .room-btn:hover{transform:translateY(-2px)}
+  .room-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+  /* ===== MODALS ===== */
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;justify-content:center;align-items:center}
+  .modal-content{background:#fff;padding:26px;border-radius:20px;max-width:720px;max-height:84vh;overflow:auto;position:relative;margin:16px;box-shadow:0 18px 58px rgba(0,0,0,.3)}
+  .modal h2{color:#2E8B57;margin-bottom:14px;font-size:1.8em;text-align:center}
+  .close-btn{position:absolute;top:12px;right:16px;background:#ff4757;color:#fff;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.1em;font-weight:700}
+
+  /* ===== SETUP ===== */
+  .setup-screen{
+    display:none;position:relative;margin:20px auto;padding:22px;
+    max-width:1200px;height:calc(100vh - 40px);overflow:auto;
+    background:rgba(255,255,255,.95);border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.3)
+  }
+  .back-btn{position:fixed;top:14px;left:14px;z-index:1200;background:rgba(0,0,0,.65);color:#fff;border:none;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:700}
+  .back-btn:hover{filter:brightness(1.1)}
+  .setup-header{text-align:center;margin-bottom:18px}
+  .setup-title{color:#2E8B57;font-size:2.3em;margin-bottom:6px}
+  .input-group{margin:16px 0}
+  label{font-size:1.1em;color:#2E8B57;font-weight:700;display:block;margin-bottom:8px}
+  input[type="number"]{padding:12px;font-size:1.05em;border:2px solid #2E8B57;border-radius:10px;max-width:220px}
+
+  .file-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .file-upload{display:flex;align-items:center;gap:12px;width:100%}
+  .file-upload input[type="file"]{display:none}
+  .file-btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(45deg,#5B86E5,#36D1DC);color:#fff;border:none;padding:10px 16px;border-radius:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+  .file-name{flex:1;min-width:260px;padding:10px 12px;border:2px dashed #36D1DC;border-radius:12px;color:#136a8a;background:#ecfbff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .icon-btn{background:#efefef;border:none;padding:10px 12px;border-radius:12px;cursor:pointer;font-size:1.2em;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+  .icon-btn:hover{filter:brightness(0.95)}
+
+  .list-stats{margin:16px 0}
+  .stats-card{border-radius:16px;overflow:hidden;border:2px solid #cde8d7;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+  .stats-head{background:linear-gradient(90deg,#2E8B57,#41b883);color:#fff;padding:12px 16px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:10px}
+  .stats-table{width:100%;border-collapse:collapse;background:#fff}
+  .stats-table th,.stats-table td{padding:12px 14px}
+  .stats-table th{text-align:left;color:#2E8B57;background:#f3fbf7;border-bottom:2px solid #e8f6ef}
+  .stats-table tr:nth-child(even){background:#f9fcfa}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e8f6ef;color:#2E8B57;font-weight:700}
+
+  .student-preview{margin:14px 0;padding:18px;background:#e8f5e8;border-radius:14px;border:2px solid #28a745;display:none;max-height:380px;overflow:auto}
+  .student-list-container{max-height:320px;overflow:auto;background:#f8f9fa;border:2px solid #dee2e6;border-radius:10px;padding:14px;margin:12px 0}
+  .student-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin:6px 0;background:#fff;border-radius:10px;border:1px solid #e9ecef;box-shadow:0 2px 4px rgba(0,0,0,.06)}
+  .btn-small{background:#007bff;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:.85em;font-weight:700}
+  .btn-small.edit{background:#28a745}.btn-small.delete{background:#dc3545}
+
+  /* ===== GAME ===== */
+  .game-screen{display:none;width:100%;height:100vh;background:rgba(255,255,255,.96)}
+  .game-header{padding:8px 18px;background:rgba(46,139,87,.9);color:#fff;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.95em;height:46px}
+  .race-container{
+    height:calc(100vh - 96px);padding:10px;
+    /* Evita scroll vertical */
+    overflow:hidden;
+  }
+  .race-track{
+    --label-width:90;
+    --track-px:800; --lane-gap:2;
+    position:relative;height:100%;
+    background:linear-gradient(to right,#228B22 0%,#32CD32 50%,#228B22 100%);
+    border:4px solid #8B4513;border-radius:16px;padding:15px;display:flex;flex-direction:column;overflow:hidden
+  }
+  .finish-line{
+    position:absolute;top:15px;bottom:15px;
+    left:calc(15px + var(--label-width)*1px + 10px + var(--track-px)*1px);
+    width:8px;background:repeating-linear-gradient(45deg,#000,#000 10px,#fff 10px,#fff 20px);
+    border-radius:4px;box-shadow:0 0 10px rgba(0,0,0,.6);z-index:10
+  }
+  .lanes-container{
+    flex:1;display:flex;flex-direction:column;gap:calc(var(--lane-gap)*1px);
+    /* Fijar altura para 35 pistas */
+    height:calc(var(--lane-height,28px) * 35 + 2px * 34);
+    min-height:calc(var(--lane-height,28px) * 35 + 2px * 34);
+    max-height:calc(var(--lane-height,28px) * 35 + 2px * 34);
+    overflow:hidden;
+  }
+  .duck-lane{height:var(--lane-height,28px);display:flex;align-items:center;position:relative;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.4);border-radius:8px;padding:2px 10px}
+  .lane-left{
+    position:absolute;left:10px;z-index:3;display:flex;align-items:center;gap:6px;width:calc(var(--label-width)*1px);
+    padding:2px 6px;border-radius:8px;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.8);font-weight:800;background:rgba(0,0,0,.55);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:calc(var(--lane-height)*0.45); line-height:1
+  }
+  .player-key{background:linear-gradient(45deg,#FF6347,#FFA500);border:1px solid rgba(255,255,255,.6);box-shadow:0 2px 4px rgba(0,0,0,.3);color:#fff;padding:0.15em 0.5em;border-radius:6px;min-width:1.8em;text-align:center}
+  .progress-bar{position:absolute;left:calc(10px + var(--label-width)*1px);width:calc(var(--track-px)*1px);top:50%;transform:translateY(-50%);height:3px;background:rgba(255,255,255,.5);border-radius:2px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#ff6b6b,#4ecdc4,#feca57);border-radius:2px;width:0%}
+  .duck{
+    position:absolute;left:calc(10px + var(--label-width)*1px);
+    width:var(--duck-size,22px);height:var(--duck-size,22px);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;text-shadow:1px 1px 2px rgba(0,0,0,.8);
+    border:3px solid rgba(255,255,255,.9);box-shadow:0 3px 6px rgba(0,0,0,.35);transition:left .14s linear;z-index:2
+  }
+  .duck .acc{position:absolute;right:-6px;top:-8px;font-size:.9em}
+  .finish-name{
+    position:absolute;left:calc(10px + var(--label-width)*1px + var(--track-px)*1px + 16px);
+    top:50%;transform:translateY(-50%);
+    color:#173a2b;background:#fff;border:2px solid #cde8d7;border-radius:10px;padding:0.12em 0.5em;font-weight:800;
+    line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.15);z-index:3;white-space:nowrap;max-height:90%;font-size:calc(var(--lane-height)*0.45);overflow:hidden
+  }
+
+  .game-controls{padding:8px;background:rgba(46,139,87,.9);color:#fff;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;height:50px;align-items:center}
+  .control-btn{background:linear-gradient(45deg,#FF6347,#FFA500);border:none;padding:8px 16px;font-weight:800;color:#fff;border-radius:20px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+  .winner-message{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff;padding:26px;border-radius:20px;font-size:1.2em;font-weight:800;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.6);z-index:1100;display:none;max-width:90%;max-height:80vh;overflow:auto}
+  .ranking-list{background:rgba(255,255,255,.12);border-radius:10px;padding:14px;margin-top:14px;max-height:280px;overflow:auto}
+  .ranking-item{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin:4px 0;background:rgba(255,255,255,.1);border-radius:8px;font-size:.85em}
+  .ranking-item.winner{background:rgba(255,215,0,.32);border:2px solid #FFD700}
+  .ranking-item.loser{background:rgba(255,99,99,.32);border:2px solid #FF6363}
+
+  .connection-status{position:fixed;top:20px;right:20px;padding:8px 16px;border-radius:20px;font-weight:700;font-size:0.9em;z-index:1300}
+  .status-connected{background:#28a745;color:#fff}
+  .status-disconnected{background:#dc3545;color:#fff}
+  .status-connecting{background:#ffc107;color:#000}
+
+  @media (max-width:768px){
+    .title{font-size:2.1em}.logo{font-size:3em}.menu-btn{min-width:200px}
+    .multiplayer-btn{min-width:220px}.multiplayer-title{font-size:2em}
+    .room-title{font-size:1.8em}.room-code{font-size:1.2em}
+    .race-track{--label-width:78}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<div class="container">
+  <!-- CONNECTION STATUS -->
+  <div id="connectionStatus" class="connection-status status-disconnected" style="display:none">
+    🔴 Desconectado
+  </div>
+
+  <!-- START -->
+  <div id="startScreen" class="start-screen">
+    <div class="floating-ducks">
+      <div class="floating-duck" style="top:10%;animation-delay:0s">🦆</div>
+      <div class="floating-duck" style="top:30%;animation-delay:2s">🐥</div>
+      <div class="floating-duck" style="top:60%;animation-delay:4s">🦆</div>
+      <div class="floating-duck" style="top:80%;animation-delay:6s">🐥</div>
+    </div>
+    <div class="logo">🦆</div>
+    <h1 class="title">CARRERA DE PATOS INVERSA</h1>
+    <p class="subtitle">¡El último en llegar es el GANADOR!</p>
+    <div class="menu-buttons">
+      <button class="menu-btn play" onclick="goToSetup()">🎮 JUGAR SOLO</button>
+      <button class="menu-btn multiplayer" onclick="goToMultiplayer()">🌐 MULTIJUGADOR</button>
+      <button class="menu-btn details" onclick="showDetails()">📋 DETALLES DEL JUEGO</button>
+      <button class="menu-btn config" onclick="showConfig()">⚙️ CONFIGURACIÓN</button>
+      <br><p class="subtitle"> ~ Baz Balderas & friends ~</p>
+    </div>
+  </div>
+
+  <!-- MULTIPLAYER MENU -->
+  <div id="multiplayerScreen" class="multiplayer-screen">
+    <button class="back-btn" onclick="goToStart()">← Volver</button>
+    <div class="multiplayer-header">
+      <h1 class="multiplayer-title">🌐 MULTIJUGADOR</h1>
+      <p style="color:#666;font-size:1.1em">Juega con amigos en línea</p>
+    </div>
+    <div class="multiplayer-buttons">
+      <button class="multiplayer-btn create" onclick="goToCreateRoom()">🏠 CREAR SALA</button>
+      <button class="multiplayer-btn join" onclick="goToJoinRoom()">🚪 UNIRSE A SALA</button>
+    </div>
+  </div>
+
+  <!-- CREATE ROOM -->
+  <div id="createRoomScreen" class="room-screen">
+    <button class="back-btn" onclick="goToMultiplayer()">← Volver</button>
+    <div class="room-header">
+      <h1 class="room-title">🏠 CREAR SALA</h1>
+      <div id="roomCodeDisplay" style="display:none">
+        <p style="color:#666;margin-bottom:10px">Código de la sala:</p>
+        <div class="room-code" id="roomCodeText">----</div>
+        <div id="localIpInfo" style="margin-top:10px;color:#888;font-size:0.95em"></div>
+        <div id="playerLinkSection" style="margin-top:14px;display:none">
+          <label style="font-weight:700;color:#4ECDC4;font-size:1.1em">🔗 Link para jugadores:</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <input type="text" id="playerJoinLink" readonly style="flex:1;padding:8px;border-radius:8px;border:1px solid #4ECDC4;background:#f8f9fa;color:#333;font-weight:600">
+            <button class="icon-btn" onclick="copyPlayerLink()" title="Copiar link">📋</button>
+          </div>
+          <small style="color:#888">Comparte este link para que otros se unan como jugadores.</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="input-section">
+      <label for="hostName" style="font-size:1.2em;color:#4ECDC4;font-weight:700;margin-bottom:10px">Tu nombre:</label>
+      <br>
+      <input type="text" id="hostName" class="room-input" placeholder="Escribe tu nombre..." maxlength="20" style="width:300px;margin-bottom:20px">
+    </div>
+
+    <div id="roomCreated" style="display:none">
+      <div class="waiting-room">
+        <h3 style="color:#4ECDC4;margin-bottom:15px">👥 Jugadores en la sala:</h3>
+        <div id="roomPlayersList" class="players-list">
+          <!-- Players will be added here -->
+        </div>
+      </div>
+
+      <!-- HOST CONTROLS -->
+      <div id="hostControls" class="input-group">
+        <label>📁 Cargar lista de estudiantes (opcional):</label>
+        <div class="file-row">
+          <div class="file-upload">
+            <label class="file-btn">
+              ⬆️ Cargar archivo
+              <input type="file" id="roomFileInput" accept=".xlsx,.xls,.docx,.txt,.csv" onchange="loadRoomFile()">
+            </label>
+            <span id="roomFileName" class="file-name">Ningún archivo seleccionado</span>
+          </div>
+          <button class="icon-btn" title="Limpiar lista" onclick="clearRoomList()">🗑️</button>
+        </div>
+
+        <div id="roomStudentPreview" class="student-preview" style="display:none">
+          <h3>👥 Lista de estudiantes:</h3>
+          <div id="roomStudentContainer" class="student-list-container"></div>
+        </div>
+      </div>
+
+      <!-- NUEVA SECCIÓN: AGREGAR JUGADORES MANUALMENTE -->
+      <div class="list-controls" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:16px 0">
+        <button class="control-btn" onclick="toggleRoomAddPlayer()">➕ Agregar Jugador</button>
+        <button class="control-btn" onclick="shuffleRoomPlayers()" id="roomShuffleBtn">🔀 Mezclar Lista</button>
+        <button class="control-btn" onclick="sortRoomPlayersAZ()" id="roomSortBtn">🔤 Ordenar A-Z</button>
+      </div>
+
+      <div id="roomAddPlayerSection" class="add-player-section" style="display:none;background:#d4edda;border-radius:12px;border:2px solid #c3e6cb;padding:18px;margin:12px 0">
+        <h3>➕ Agregar Nuevo Jugador</h3>
+        <div class="add-player-form" style="display:flex;gap:12px;align-items:end;margin-top:10px">
+          <input type="text" id="roomNewPlayerName" placeholder="Nombre del jugador..." maxlength="50" style="flex:1;padding:10px;border:2px solid #2E8B57;border-radius:10px">
+          <button class="control-btn" onclick="addRoomPlayer()">Agregar</button>
+          <button class="control-btn" onclick="toggleRoomAddPlayer()" style="background:#6c757d">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- NUEVA SECCIÓN: ESTADÍSTICAS -->
+      <div id="roomListStats" class="list-stats">
+        <div class="stats-card">
+          <div class="stats-head">📊 Configuración Actual</div>
+          <table class="stats-table">
+            <thead><tr><th>Métrica</th><th>Valor</th></tr></thead>
+            <tbody>
+              <tr><td>Total Jugadores</td><td><span id="roomTotalPlayers" class="badge">0</span></td></tr>
+              <tr><td>Espacios Libres</td><td><span id="roomFreeSpaces" class="badge">35</span></td></tr>
+              <tr><td>Modo</td><td><span id="roomModeLabel" class="badge">Normal</span></td></tr>
+              <tr><td>Colores</td><td><span id="roomPaletteLabel" class="badge">Arcoíris</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="room-controls">
+        <button class="room-btn copy" onclick="copyRoomCode()">📋 Copiar Código</button>
+        <button class="room-btn start" onclick="startMultiplayerGame()" id="startRoomBtn" disabled>🏁 Iniciar Carrera</button>
+      </div>
+    </div>
+
+    <div id="createRoomBtn" class="room-controls">
+      <button class="room-btn start" onclick="createRoom()">🏠 Crear Sala</button>
+    </div>
+  </div>
+
+  <!-- JOIN ROOM -->
+  <div id="joinRoomScreen" class="room-screen">
+    <button class="back-btn" onclick="goToMultiplayer()">← Volver</button>
+    <div class="room-header">
+      <h1 class="room-title">🚪 UNIRSE A SALA</h1>
+      <p style="color:#666;font-size:1.1em">Ingresa el código de la sala</p>
+    </div>
+    
+    <div class="input-section">
+      <input type="text" id="joinRoomCode" class="room-input" placeholder="CÓDIGO" maxlength="6" style="text-transform:uppercase;margin-bottom:20px">
+      <br>
+      <input type="text" id="playerName" class="room-input" placeholder="Tu nombre..." maxlength="20" style="width:300px;margin-bottom:20px">
+    </div>
+
+    <div id="joinedRoom" style="display:none">
+      <div class="waiting-room">
+        <h3 style="color:#667eea;margin-bottom:15px">👥 Jugadores en la sala:</h3>
+        <div id="joinRoomPlayersList" class="players-list">
+          <!-- Players will be added here -->
+        </div>
+        <p style="text-align:center;color:#666;margin-top:15px">Esperando al anfitrión para iniciar...</p>
+      </div>
+    </div>
+
+    <div id="joinRoomBtn" class="room-controls">
+      <button class="room-btn join" onclick="joinRoom()">🚪 Unirse</button>
+    </div>
+  </div>
+
+  <!-- DETALLES -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal('detailsModal')">×</button>
+      <h2>📋 Detalles del Juego</h2>
+      <div class="instructions">
+        <h3>🎯 Objetivo</h3>
+        <ul>
+          <li><strong>¡SER EL ÚLTIMO en llegar a la meta!</strong></li>
+          <li>El primero en tocar la línea pierde</li>
+          <li>Gana quien quede más atrás cuando alguien llega</li>
+        </ul>
+        <h3>🎮 Cómo se mueve</h3>
+        <ul>
+          <li>Teclas únicas por jugador (A–Z, 0–9)</li>
+          <li>Normal: otros +3 px, tú −1 px. Frenesí: otros +9 px, tú −3 px.</li>
+        </ul>
+        <h3>🌐 Multijugador</h3>
+        <ul>
+          <li>Crea una sala y comparte el código con amigos</li>
+          <li>El anfitrión puede cargar listas de estudiantes</li>
+          <li>Todos los jugadores compiten en tiempo real</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIGURACIÓN VISUAL/MODO -->
+  <div id="configModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal('configModal')">×</button>
+      <h2>⚙️ Configuración Visual y Modos</h2>
+      <div class="instructions">
+        <h3>🎨 Colores</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          <label><input type="radio" name="palette" value="rainbow" checked> Arcoíris</label>
+          <label><input type="radio" name="palette" value="pastel"> Pastel</label>
+          <label><input type="radio" name="palette" value="neon"> Neón</label>
+          <label><input type="radio" name="palette" value="forest"> Bosque</label>
+          <label><input type="radio" name="palette" value="warm"> Cálidos</label>
+          <label style="margin-left:16px"><input type="checkbox" id="uniqueColors" checked> Un color por pato</label>
+        </div>
+        <h3 style="margin-top:14px">🧢 Accesorios</h3>
+        <label><input type="checkbox" id="useAccessories"> Accesorios aleatorios (👑🕶️🎧🎩…)</label>
+        <h3 style="margin-top:14px">🚀 Modo de juego</h3>
+        <div style="display:flex;gap:16px;align-items:center">
+          <label><input type="radio" name="mode" value="normal" checked> Normal</label>
+          <label><input type="radio" name="mode" value="frenesi"> Frenesí (x3)</label>
+        </div>
+        <p style="margin-top:8px;color:#555">* En la meta se muestra el <strong>primer nombre</strong> (si se repite, se usa el segundo o la inicial).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div id="setupScreen" class="setup-screen">
+    <button class="back-btn" onclick="goToStart()">← Volver</button>
+    <div class="setup-header">
+      <h1 class="setup-title">🦆 Configuración del Juego</h1>
+      <p style="color:#666;font-size:1.05em">Máximo <b>35</b> jugadores</p>
+    </div>
+
+    <div class="input-group">
+      <label for="playerCount">🎯 Número de jugadores:</label>
+      <input type="number" id="playerCount" min="2" max="35" value="5" onchange="updatePlayerCount()">
+    </div>
+
+    <div class="input-group">
+      <label>📁 O cargar lista de estudiantes:</label>
+      <div class="file-row">
+        <div class="file-upload">
+          <label class="file-btn">
+            ⬆️ Cargar archivo
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.docx,.txt,.csv" onchange="loadFile()">
+          </label>
+          <span id="fileName" class="file-name">Ningún archivo seleccionado</span>
+        </div>
+        <button class="icon-btn" title="Limpiar lista" onclick="clearList()">🗑️</button>
+      </div>
+      <p style="color:#666;font-size:.9em;margin-top:6px">Se reemplaza la configuración por número al cargar un archivo.</p>
+    </div>
+
+    <div id="listStats" class="list-stats">
+      <div class="stats-card">
+        <div class="stats-head">📊 Configuración Actual</div>
+        <table class="stats-table">
+          <thead><tr><th>Métrica</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td>Total Jugadores</td><td><span id="totalPlayers" class="badge">5</span></td></tr>
+            <tr><td>Tipo</td><td><span id="playerType" class="badge">Por número</span></td></tr>
+            <tr><td>Espacios Libres</td><td><span id="freeSpaces" class="badge">30</span></td></tr>
+            <tr><td>Modo</td><td><span id="modeLabel" class="badge">Normal</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="list-controls" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:10px 0">
+      <button class="control-btn" onclick="toggleAddPlayer()">➕ Agregar Jugador</button>
+      <button class="control-btn" onclick="shufflePlayers()" id="shuffleBtn">🔀 Mezclar Lista</button>
+      <button class="control-btn" onclick="sortPlayersAZ()" id="sortBtn">🔤 Ordenar A-Z</button>
+      <button class="control-btn" onclick="exportList()" id="exportBtn">💾 Exportar Lista</button>
+    </div>
+
+    <div id="addPlayerSection" class="add-player-section" style="display:none;background:#d4edda;border-radius:12px;border:2px solid #c3e6cb;padding:18px;margin:12px 0">
+      <h3>➕ Agregar Nuevo Jugador</h3>
+      <div class="add-player-form" style="display:flex;gap:12px;align-items:end;margin-top:10px">
+        <input type="text" id="newPlayerName" placeholder="Nombre del jugador..." maxlength="50" style="flex:1;padding:10px;border:2px solid #2E8B57;border-radius:10px">
+        <button class="control-btn" onclick="addNewPlayer()">Agregar</button>
+        <button class="control-btn" onclick="toggleAddPlayer()" style="background:#6c757d">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="studentPreview" class="student-preview">
+      <h3 id="previewTitle">👥 Jugadores configurados:</h3>
+      <div id="studentListContainer" class="student-list-container"></div>
+    </div>
+
+    <div id="messageArea"></div>
+
+    <div style="text-align:center;margin:24px 0">
+      <button id="startGameBtn" class="menu-btn play" onclick="startGame()">🏁 ¡Iniciar Carrera!</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="gameScreen" class="game-screen">
+    <div class="game-header">
+      <div>🦆 CARRERA DE PATOS INVERSA</div>
+      <div id="gameStatus">Carrera lista</div>
+    </div>
+    <div class="race-container">
+      <div class="race-track" id="raceTrack">
+        <div class="finish-line"></div>
+        <div id="lanesContainer" class="lanes-container"></div>
+      </div>
+    </div>
+    <div class="game-controls">
+      <button class="control-btn" onclick="newRace()">🔄 Nueva Carrera</button>
+      <button class="control-btn" onclick="changePlayers()">👥 Cambiar Jugadores</button>
+      <button class="control-btn" onclick="goToStart()">🏠 Menú Principal</button>
+    </div>
+  </div>
+
+  <div id="winnerMessage" class="winner-message">
+    <div id="winnerContent"></div>
+    <div id="rankingList" class="ranking-list"></div>
+    <button class="control-btn" onclick="closeWinnerMessage()" style="margin-top:14px">✅ Continuar</button>
+  </div>
+</div>
+
+<script>
+  const MAX_PLAYERS=35, TRACK_WIDTH=800, KEY_COOLDOWN=100;
+  const availableKeys=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',...'0123456789'];
+  const PALETTES={rainbow:['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#845EC2','#F9F871','#00C9A7','#C34A36'],pastel:['#FFAFCC','#BDE0FE','#A0E7E5','#B9FBC0','#FDE2E4','#E2F0CB','#CDE7BE','#D7E3FC'],neon:['#FF2E63','#08D9D6','#FCEE21','#1B9CFC','#9AECDB','#E84393','#55E6C1','#f368e0'],forest:['#2F5233','#4F772D','#90A955','#A4B494','#31572C','#6E9887','#E9FAE3','#CAD2C5'],warm:['#FF8C42','#FF5D73','#FFB703','#E76F51','#D62839','#F4A261','#E36414','#B56576']};
+  const ACCESSORIES=['👑','🕶️','🎧','🎩','🎀','🧢','🎓'];
+
+  let students=[], gameRunning=false, playerPositions={}, assignedKeys={}, keyboardMap={}, lastKeyPressTime={}, configType='number';
+  let gameMode='normal', palette='rainbow', uniqueColors=true, useAccessories=false;
+  
+  // Multiplayer variables
+  let socket=null, isMultiplayer=false, isHost=false, currentRoom=null, roomStudents=[], myPlayerId=null;
+
+  const byId=id=>document.getElementById(id);
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+
+  // ===== SOCKET CONNECTION =====
+  function initSocket(){
+    if(socket) return;
+    try{
+      socket = io();
+      
+      socket.on('connect', () => {
+        updateConnectionStatus(true);
+        console.log('Conectado al servidor');
+      });
+
+      socket.on('disconnect', () => {
+        updateConnectionStatus(false);
+        console.log('Desconectado del servidor');
+      });
+
+      socket.on('roomCreated', (data) => {
+        currentRoom = data.roomCode;
+        myPlayerId = data.playerId;
+        byId('roomCodeText').textContent = data.roomCode;
+        showRoomCodeAndIp();
+        byId('createRoomBtn').style.display = 'none';
+        byId('roomCreated').style.display = 'block';
+        updateRoomPlayersList(data.players, 'roomPlayersList');
+        showRoomMessage('✅ Sala creada exitosamente', 'success');
+      });
+
+      socket.on('roomJoined', (data) => {
+        currentRoom = data.roomCode;
+        myPlayerId = data.playerId;
+        isHost = false;
+        byId('joinRoomBtn').style.display = 'none';
+        byId('joinedRoom').style.display = 'block';
+        updateRoomPlayersList(data.players, 'joinRoomPlayersList');
+        showRoomMessage('✅ Te uniste a la sala exitosamente', 'success');
+      });
+
+      socket.on('playerJoined', (data) => {
+        if(isHost) {
+          updateRoomPlayersList(data.players, 'roomPlayersList');
+          updateStartButton(data.players.length);
+        } else {
+          updateRoomPlayersList(data.players, 'joinRoomPlayersList');
+        }
+        showRoomMessage(`👋 ${data.newPlayer.name} se unió a la sala`, 'info');
+      });
+
+      socket.on('playerLeft', (data) => {
+        if(isHost) {
+          updateRoomPlayersList(data.players, 'roomPlayersList');
+          updateStartButton(data.players.length);
+        } else {
+          updateRoomPlayersList(data.players, 'joinRoomPlayersList');
+        }
+        showRoomMessage(`👋 Un jugador abandonó la sala`, 'info');
+      });
+
+      socket.on('studentsUpdated', (data) => {
+        roomStudents = data.students || [];
+        updateRoomStudentPreview();
+        showRoomMessage('📚 Lista de estudiantes actualizada por el anfitrión', 'info');
+      });
+
+      socket.on('gameStarted', (data) => {
+        students = data.students;
+        gameMode = data.gameMode || 'normal';
+        isMultiplayer = true;
+        hideAllScreens();
+        show('gameScreen');
+        initializeGame();
+      });
+
+      socket.on('gameUpdate', (data) => {
+        if(gameRunning && isMultiplayer) {
+          Object.assign(playerPositions, data.positions);
+        }
+      });
+
+      socket.on('gameEnded', (data) => {
+        if(isMultiplayer) {
+          endMultiplayerGame(data.winner, data.ranking);
+        }
+      });
+
+      socket.on('roomError', (data) => {
+        showRoomMessage(`❌ ${data.message}`, 'error');
+      });
+
+    } catch(error) {
+      console.error('Error conectando con el servidor:', error);
+      updateConnectionStatus(false);
+    }
+  }
+
+  function updateConnectionStatus(connected) {
+    const status = byId('connectionStatus');
+    if(connected) {
+      status.className = 'connection-status status-connected';
+      status.textContent = '🟢 Conectado';
+      status.style.display = 'block';
+    } else {
+      status.className = 'connection-status status-disconnected';
+      status.textContent = '🔴 Desconectado';
+      status.style.display = 'block';
+    }
+    setTimeout(() => {
+      status.style.display = 'none';
+    }, 3000);
+  }
+
+  // ===== NAVIGATION =====
+  function goToStart(){hideAllScreens();show('startScreen');stopGame();resetMultiplayer()}
+  function goToSetup(){hideAllScreens();show('setupScreen')}
+  function goToMultiplayer(){hideAllScreens();show('multiplayerScreen');initSocket()}
+  function goToCreateRoom(){hideAllScreens();show('createRoomScreen');initSocket()}
+  function goToJoinRoom(){hideAllScreens();show('joinRoomScreen');initSocket()}
+  
+  function hideAllScreens(){
+    ['startScreen','setupScreen','gameScreen','multiplayerScreen','createRoomScreen','joinRoomScreen'].forEach(id=>hide(id));
+  }
+  function showDetails(){byId('detailsModal').style.display='flex'}
+  function showConfig(){byId('configModal').style.display='flex'}
+  function closeModal(id){byId(id).style.display='none'}
+  function show(id){byId(id).style.display=id==='startScreen'?'flex':'block'}
+  function hide(id){byId(id).style.display='none'}
+
+  // ===== MULTIPLAYER FUNCTIONS =====
+  function resetMultiplayer(){
+    isMultiplayer=false;isHost=false;currentRoom=null;roomStudents=[];myPlayerId=null;
+    if(socket && socket.connected) {
+      socket.disconnect();
+      socket = null;
+    }
+  }
+
+  function createRoom(){
+    const hostName = byId('hostName').value.trim();
+    if(!hostName || hostName.length < 2) {
+      showRoomMessage('❌ Ingresa un nombre válido (mínimo 2 caracteres)', 'error');
+      return;
+    }
+    if(!socket || !socket.connected) {
+      showRoomMessage('❌ No hay conexión con el servidor', 'error');
+      return;
+    }
+    
+    isHost = true;
+    socket.emit('createRoom', { hostName });
+  }
+
+  function joinRoom(){
+    const roomCode = byId('joinRoomCode').value.trim().toUpperCase();
+    const playerName = byId('playerName').value.trim();
+    
+    if(!roomCode || roomCode.length !== 6) {
+      showRoomMessage('❌ Ingresa un código de sala válido (6 caracteres)', 'error');
+      return;
+    }
+    if(!playerName || playerName.length < 2) {
+      showRoomMessage('❌ Ingresa un nombre válido (mínimo 2 caracteres)', 'error');
+      return;
+    }
+    if(!socket || !socket.connected) {
+      showRoomMessage('❌ No hay conexión con el servidor', 'error');
+      return;
+    }
+
+    socket.emit('joinRoom', { roomCode, playerName });
+  }
+
+  function copyRoomCode(){
+    const code = currentRoom;
+    if(!code) return;
+    
+    navigator.clipboard.writeText(code).then(() => {
+      showRoomMessage('📋 Código copiado al portapapeles', 'success');
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = code;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showRoomMessage('📋 Código copiado al portapapeles', 'success');
+    });
+  }
+
+  function updateRoomPlayersList(players, containerId) {
+    const container = byId(containerId);
+    if(!container || !players) return;
+    
+    container.innerHTML = players.map(player => `
+      <div class="player-item">
+        <div class="player-name">
+          ${player.name}
+          ${player.isHost ? '<span class="host-badge">ANFITRIÓN</span>' : ''}
+        </div>
+        <div class="player-status">${player.isHost ? '👑' : '👤'}</div>
+      </div>
+    `).join('');
+  }
+
+  function updateStartButton(playerCount) {
+    const btn = byId('startRoomBtn');
+    const minPlayers = roomStudents.length > 0 ? Math.max(roomStudents.length, 2) : 2;
+    btn.disabled = playerCount < minPlayers;
+    btn.textContent = playerCount < minPlayers ? 
+      `🏁 Mínimo ${minPlayers} jugadores` : 
+      '🏁 Iniciar Carrera';
+  }
+
+  function startMultiplayerGame() {
+    if(!isHost || !socket) return;
+    
+    gameMode = document.querySelector('input[name="mode"]:checked')?.value || 'normal';
+    palette = document.querySelector('input[name="palette"]:checked')?.value || 'rainbow';
+    uniqueColors = byId('uniqueColors').checked;
+    useAccessories = byId('useAccessories').checked;
+    
+    const studentsToUse = roomStudents.length > 0 ? roomStudents : [];
+    
+    socket.emit('startGame', {
+      roomCode: currentRoom,
+      students: studentsToUse,
+      gameMode,
+      palette,
+      uniqueColors,
+      useAccessories
+    });
+  }
+
+  // ===== ROOM PLAYERS MANAGEMENT =====
+  function toggleRoomAddPlayer(){
+    const s=byId('roomAddPlayerSection');
+    s.style.display=s.style.display==='none'?'block':'none';
+    if(s.style.display==='block') byId('roomNewPlayerName').focus()
+  }
+  
+  function addRoomPlayer(){
+    const input=byId('roomNewPlayerName');
+    const name=input.value.trim();
+    if(!name) return showRoomMessage('❌ Ingresa un nombre','error');
+    if(name.length<2) return showRoomMessage('❌ Mínimo 2 caracteres','error');
+    
+    // Verificar si ya existe en la lista
+    const exists = roomStudents.some(student => student === name);
+    if(exists) return showRoomMessage('❌ Ya existe este nombre','error');
+    
+    if(roomStudents.length>=MAX_PLAYERS) return showRoomMessage('❌ Máximo 35 jugadores','error');
+    
+    roomStudents.push(name);
+    updateRoomStudentPreview();
+    updateRoomStatistics();
+    
+    // Notify other players
+    if(socket && currentRoom) {
+      socket.emit('updateStudents', {
+        roomCode: currentRoom,
+        students: roomStudents
+      });
+    }
+    
+    showRoomMessage(`✅ "${name}" agregado`,'success');
+    input.value='';
+    input.focus();
+  }
+  
+  function shuffleRoomPlayers(){
+    if(roomStudents.length<2) return showRoomMessage('❌ Mínimo 2 jugadores','error');
+    for(let i=roomStudents.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [roomStudents[i],roomStudents[j]]=[roomStudents[j],roomStudents[i]]
+    }
+    updateRoomStudentPreview();
+    
+    // Notify other players
+    if(socket && currentRoom) {
+      socket.emit('updateStudents', {
+        roomCode: currentRoom,
+        students: roomStudents
+      });
+    }
+    
+    showRoomMessage('🔀 Mezclado','success')
+  }
+  
+  function sortRoomPlayersAZ(){
+    if(roomStudents.length<2) return showRoomMessage('❌ Mínimo 2 jugadores','error');
+    roomStudents.sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+    updateRoomStudentPreview();
+    
+    // Notify other players
+    if(socket && currentRoom) {
+      socket.emit('updateStudents', {
+        roomCode: currentRoom,
+        students: roomStudents
+      });
+    }
+    
+    showRoomMessage('🔤 Ordenado','success')
+  }
+
+  function updateRoomStatistics() {
+    // Actualizar estadísticas en la sala
+    const totalPlayers = roomStudents.length;
+    const freeSpaces = MAX_PLAYERS - totalPlayers;
+    const currentMode = document.querySelector('input[name="mode"]:checked')?.value || 'normal';
+    const currentPalette = document.querySelector('input[name="palette"]:checked')?.value || 'rainbow';
+    
+    byId('roomTotalPlayers').textContent = totalPlayers;
+    byId('roomFreeSpaces').textContent = freeSpaces;
+    byId('roomModeLabel').textContent = currentMode === 'normal' ? 'Normal' : 'Frenesí';
+    byId('roomPaletteLabel').textContent = {
+      'rainbow': 'Arcoíris',
+      'pastel': 'Pastel',
+      'neon': 'Neón',
+      'forest': 'Bosque',
+      'warm': 'Cálidos'
+    }[currentPalette] || 'Arcoíris';
+    
+    // Actualizar el estado del botón de inicio
+    updateStartButton(totalPlayers);
+  }
+
+  function updateRoomStudentPreview(){
+    const preview=byId('roomStudentPreview');
+    const container=byId('roomStudentContainer');
+    
+    if(roomStudents.length === 0) {
+      preview.style.display='none';
+      return;
+    }
+    
+    preview.style.display='block';
+    container.innerHTML=roomStudents.map((s,i)=>`
+      <div class="student-item">
+        <span style="flex:1;font-weight:600">${s}</span>
+        <div class="student-actions" style="display:flex;gap:8px">
+          <button class="btn-small edit" onclick="editRoomStudent(${i})">✏️</button>
+          <button class="btn-small delete" onclick="removeRoomStudent(${i})">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+    
+    updateRoomStatistics();
+  }
+  
+  function editRoomStudent(i){
+    const item=document.querySelector(`#roomStudentContainer .student-item:nth-child(${i+1})`);
+    const nameSpan=item.querySelector('span');
+    const actions=item.querySelector('.student-actions');
+    const input=document.createElement('input');
+    input.value=roomStudents[i];
+    input.style.cssText='flex:1;padding:6px;border:1px solid #ccc;border-radius:8px';
+    nameSpan.replaceWith(input);
+    actions.innerHTML=`<button class="btn-small" onclick="saveRoomStudentEdit(${i})">💾</button><button class="btn-small" onclick="cancelRoomStudentEdit()">❌</button>`;
+    input.focus();
+    input.addEventListener('keypress',e=>{
+      if(e.key==='Enter')saveRoomStudentEdit(i);
+      if(e.key==='Escape')cancelRoomStudentEdit()
+    });
+  }
+
+  function saveRoomStudentEdit(i){
+    const item=document.querySelector(`#roomStudentContainer .student-item:nth-child(${i+1})`);
+    const val=item.querySelector('input').value.trim();
+    if(!val||val.length<2) return showRoomMessage('❌ Nombre inválido','error');
+    if(val!==roomStudents[i]&&roomStudents.includes(val)) return showRoomMessage('❌ Repetido','error');
+    roomStudents[i]=val;
+    updateRoomStudentPreview();
+    
+    // Notify other players
+    if(socket && currentRoom) {
+      socket.emit('updateStudents', {
+        roomCode: currentRoom,
+        students: roomStudents
+      });
+    }
+    
+    showRoomMessage('✅ Actualizado','success');
+  }
+
+  function cancelRoomStudentEdit(){
+    updateRoomStudentPreview();
+  }
+
+  function removeRoomStudent(i){
+    if(confirm(`Eliminar a "${roomStudents[i]}"?`)){
+      roomStudents.splice(i,1);
+      updateRoomStudentPreview();
+      
+      // Notify other players
+      if(socket && currentRoom) {
+        socket.emit('updateStudents', {
+          roomCode: currentRoom,
+          students: roomStudents
+        });
+      }
+      
+      showRoomMessage('🗑️ Eliminado','success');
+    }
+  }
+
+  // ===== ROOM FILE HANDLING =====
+  async function loadRoomFile(){
+    const inp=byId('roomFileInput');
+    const f=inp.files[0];
+    if(!f) return;
+    
+    setRoomFileName(f.name);
+    showRoomMessage('📁 Cargando archivo...','info');
+    
+    try{
+      const ext=f.name.split('.').pop().toLowerCase();
+      const names=[];
+      
+      if(ext==='txt'||ext==='csv'){
+        const t=await f.text();
+        t.split(/\r?\n/).forEach(l=>l.split(',').forEach(p=>{
+          const n=p.trim();
+          if(n&&isValidName(n)) names.push(n)
+        }));
+      }
+      else if(ext==='xlsx'||ext==='xls'){
+        const ab=await f.arrayBuffer();
+        const wb=XLSX.read(ab,{type:'array'});
+        const sh=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(sh,{header:1});
+        rows.forEach(r=>r.forEach(c=>{
+          if(typeof c==='string'){
+            const n=c.trim();
+            if(n&&isValidName(n)) names.push(n)
+          }
+        }));
+      }
+      else if(ext==='docx'){
+        throw new Error('Convierte .docx a .txt para cargar');
+      }
+      else{
+        throw new Error('Formato no soportado');
+      }
+      
+      roomStudents=[...new Set(names)].slice(0,MAX_PLAYERS);
+      updateRoomStudentPreview();
+      
+      // Notify other players
+      if(socket && currentRoom) {
+        socket.emit('updateStudents', {
+          roomCode: currentRoom,
+          students: roomStudents
+        });
+      }
+      
+      showRoomMessage(`✅ Archivo cargado: ${roomStudents.length} estudiantes`,'success');
+    }catch(e){
+      showRoomMessage(`❌ Error: ${e.message}`,'error')
+    }
+  }
+
+  function setRoomFileName(n){byId('roomFileName').textContent=n||'Ningún archivo seleccionado'}
+
+  function clearRoomList(){
+    if(confirm('¿Limpiar lista de estudiantes?')){
+      roomStudents = [];
+      updateRoomStudentPreview();
+      setRoomFileName('Ningún archivo seleccionado');
+      
+      if(socket && currentRoom) {
+        socket.emit('updateStudents', {
+          roomCode: currentRoom,
+          students: roomStudents
+        });
+      }
+      
+      showRoomMessage('🗑️ Lista limpiada','success');
+    }
+  }
+
+  // Llama a showLocalIp cuando se muestra el código de sala
+  function showRoomCodeAndIp() {
+    byId('roomCodeDisplay').style.display = 'block';
+    showLocalIp();
+    updateRoomStatistics(); // Actualizar estadísticas cuando se crea la sala
+  }
+
+  // Mostrar IP local en la pantalla de crear sala
+  function showLocalIp() {
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const ip = data.ip;
+        const port = location.port || '3000';
+        const link = `http://${ip}:${port}`;
+        byId('localIpInfo').textContent =
+          `Comparte este link con tus amigos: ${link}`;
+        showPlayerJoinLink(link);
+      })
+      .catch(() => {
+        byId('localIpInfo').textContent =
+          'No se pudo obtener la IP pública. Usa la IP local de tu computadora.';
+        showPlayerJoinLink('');
+      });
+  }
+
+  // Mostrar el link para jugadores
+  function showPlayerJoinLink(link) {
+    const section = byId('playerLinkSection');
+    const input = byId('playerJoinLink');
+    if(link) {
+      input.value = link;
+      section.style.display = 'block';
+    } else {
+      input.value = '';
+      section.style.display = 'none';
+    }
+  }
+
+  // Copiar el link para jugadores
+  function copyPlayerLink() {
+    const input = byId('playerJoinLink');
+    if(!input.value) return;
+    input.select();
+    document.execCommand('copy');
+    showRoomMessage('📋 Link copiado al portapapeles', 'success');
+  }
+
+ 
+
+  // Llama a showLocalIp cuando se muestra el código de sala
+  function showRoomCodeAndIp() {
+    byId('roomCodeDisplay').style.display = 'block';
+    showLocalIp();
+    updateRoomStatistics(); // Actualizar estadísticas cuando se crea la sala
+  }
+
+  // ===== INITIALIZATION =====
+  document.addEventListener('DOMContentLoaded',()=>{
+    show('startScreen');
+    initializeNumberPlayers();
+    
+    document.querySelectorAll('.floating-duck').forEach((d,i)=>d.style.animationDelay=`${i*2}s`);
+    
+    document.querySelectorAll('input[name="mode"]').forEach(r=>r.addEventListener('change',()=>{
+      gameMode=r.value;
+      updateStudentPreview()
+    }));
+    
+    document.querySelectorAll('input[name="palette"]').forEach(r=>r.addEventListener('change',()=>{
+      palette=r.value
+    }));
+    
+    byId('uniqueColors').addEventListener('change', e => uniqueColors = e.target.checked);
+    byId('useAccessories').addEventListener('change', e => useAccessories = e.target.checked);
+    
+    // Handle room code input formatting
+    byId('joinRoomCode').addEventListener('input', e => {
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    });
+    
+    // Handle enter key in inputs
+    byId('hostName').addEventListener('keypress', e => {
+      if(e.key === 'Enter') createRoom();
+    });
+    
+    byId('playerName').addEventListener('keypress', e => {
+      if(e.key === 'Enter') joinRoom();
+    });
+    
+    byId('joinRoomCode').addEventListener('keypress', e => {
+      if(e.key === 'Enter' && byId('playerName').value.trim()) joinRoom();
+    });
+  });
+
+  window.addEventListener('resize',()=>{
+    if(byId('gameScreen').style.display==='block') setTimeout(fitAllLanes,100);
+  });
+
+  // Handle modal clicks
+  document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{
+    if(e.target===m) m.style.display='none'
+  }));
+
+  // Handle page unload for multiplayer
+  window.addEventListener('beforeunload', () => {
+    if(socket && currentRoom) {
+      socket.emit('leaveRoom', { roomCode: currentRoom, playerId: myPlayerId });
+    }
+  });
+
+  // Mostrar IP local en la pantalla de crear sala
+  function showLocalIp() {
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const ip = data.ip;
+        const port = location.port || '3000';
+        const link = `http://${ip}:${port}`;
+        byId('localIpInfo').textContent =
+          `Comparte este link con tus amigos: ${link}`;
+        showPlayerJoinLink(link);
+      })
+      .catch(() => {
+        byId('localIpInfo').textContent =
+          'No se pudo obtener la IP pública. Usa la IP local de tu computadora.';
+        showPlayerJoinLink('');
+      });
+  }
+
+  // Mostrar el link para jugadores
+  function showPlayerJoinLink(link) {
+    const section = byId('playerLinkSection');
+    const input = byId('playerJoinLink');
+    if(link) {
+      input.value = link;
+      section.style.display = 'block';
+    } else {
+      input.value = '';
+      section.style.display = 'none';
+    }
+  }
+
+  // Copiar el link para jugadores
+  function copyPlayerLink() {
+    const input = byId('playerJoinLink');
+    if(!input.value) return;
+    input.select();
+    document.execCommand('copy');
+    showRoomMessage('📋 Link copiado al portapapeles', 'success');
+  }
+
+  // Llama a showLocalIp cuando se muestra el código de sala
+  function showRoomCodeAndIp() {
+    byId('roomCodeDisplay').style.display = 'block';
+    showLocalIp();
+    updateRoomStatistics(); // Actualizar estadísticas cuando se crea la sala
+  }
+</script>
+</body>
+</html>
